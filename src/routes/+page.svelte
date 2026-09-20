@@ -20,6 +20,7 @@
 		media,
 		hijriAdj,
 		lanAddress,
+		configRevision,
 		...config
 	} = $derived(data);
 
@@ -39,10 +40,60 @@
 	let prayerTimes = $derived($prayerStore);
 
 	onMount(() => {
+		let disposed = false;
+		let refreshing = false;
+		let refreshAgain = false;
+		let checking = false;
+		const abort = new AbortController();
+
+		async function refresh() {
+			if (disposed) return;
+			if (refreshing) {
+				refreshAgain = true;
+				return;
+			}
+			refreshing = true;
+			try {
+				do {
+					refreshAgain = false;
+					await invalidateAll();
+				} while (refreshAgain && !disposed);
+			} catch (error) {
+				console.warn('Unable to refresh display; will retry.', error);
+			} finally {
+				refreshing = false;
+			}
+		}
+
+		async function checkConfig() {
+			if (checking || disposed) return;
+			checking = true;
+			try {
+				const response = await fetch('/api/config', {
+					cache: 'no-store',
+					signal: abort.signal
+				});
+				if (!response.ok) return;
+				if (JSON.stringify(await response.json()) !== configRevision) await refresh();
+			} catch {
+				// A disconnected display retries on the next check or SSE reconnect.
+			} finally {
+				checking = false;
+			}
+		}
+
 		const event = new EventSource('/api/events');
-		event.addEventListener('update', invalidateAll);
+		event.addEventListener('update', refresh);
+		// Catch changes saved while disconnected, including during a server restart.
+		event.addEventListener('open', refresh);
+		const interval = setInterval(checkConfig, 30000);
+		window.addEventListener('online', checkConfig);
 
 		return () => {
+			disposed = true;
+			abort.abort();
+			clearInterval(interval);
+			window.removeEventListener('online', checkConfig);
 			event.close();
 		};
 	});

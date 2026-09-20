@@ -6,7 +6,7 @@ export const load: PageLoad = async ({ fetch, data }) => {
 	let media: CarouselMediaType[] = [];
 	let config: ConfigType;
 
-	let res = await fetch('/api/config');
+	let res = await fetch('/api/config', { cache: 'no-store' });
 	config = (await res.json()) as ConfigType;
 
 	res = await fetch('/api/media');
@@ -14,6 +14,7 @@ export const load: PageLoad = async ({ fetch, data }) => {
 
 	return {
 		...config,
+		configRevision: JSON.stringify(config),
 		lanAddress: data.lanAddress,
 		media
 	};
