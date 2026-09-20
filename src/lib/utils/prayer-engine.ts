@@ -1,4 +1,10 @@
-import type { ConfigType } from '@/types/config';
+import {
+	TIMED_PRAYERS,
+	IQAMAH_PRAYERS,
+	type ConfigType,
+	type PrayerTimingConfig,
+	type IqamahPrayer
+} from '../types/config.ts';
 import { PrayerTimes as AdhanPrayerTimes, CalculationMethod, Coordinates, Madhab } from 'adhan';
 
 export type PrayerLabel =
@@ -40,7 +46,7 @@ const DEFAULT_SEQUENCE: PrayerConfig = {
 	beforeNotice: 5,
 	beforeAdhan: 5,
 	adhanDuration: 7,
-	beforeIqamah: 7,
+	beforeIqamah: 5,
 	prayerDuration: 10,
 	jumuahDuration: 30,
 	taraweehFromIsya: 30,
@@ -64,7 +70,8 @@ export function getPrayerTimes(
 	latitude: number,
 	longitude: number,
 	madhab: 'shafi' | 'hanafi' = 'shafi',
-	taraweehFromIsya: number = 30
+	taraweehFromIsya: number = 30,
+	adjustments: PrayerTimingConfig = {}
 ): PrayerTimeType {
 	const coordinates = new Coordinates(latitude, longitude);
 
@@ -75,7 +82,7 @@ export function getPrayerTimes(
 
 	const prayerTimes = new AdhanPrayerTimes(coordinates, date, params);
 
-	return {
+	const times: PrayerTimeType = {
 		Imsyak: new Date(prayerTimes.fajr.getTime() - 10 * MINUTE),
 		Subuh: prayerTimes.fajr,
 		Syuruq: prayerTimes.sunrise,
@@ -85,6 +92,17 @@ export function getPrayerTimes(
 		Isya: prayerTimes.isha,
 		Tarawih: new Date(prayerTimes.isha.getTime() + taraweehFromIsya * MINUTE)
 	};
+	for (const prayer of TIMED_PRAYERS) {
+		const offset = adjustments[`adjustment${prayer}`] ?? 0;
+		if (Number.isFinite(offset))
+			times[prayer] = new Date(times[prayer].getTime() + offset * MINUTE);
+	}
+	// Imsyak remains ten minutes before adjusted Subuh, plus its own offset.
+	times.Imsyak = new Date(
+		times.Imsyak.getTime() + (times.Subuh.getTime() - prayerTimes.fajr.getTime())
+	);
+	times.Tarawih = new Date(times.Isya.getTime() + taraweehFromIsya * MINUTE);
+	return times;
 }
 
 export function getCurrentPrayer(
@@ -145,10 +163,22 @@ export function getNextPrayer(prayerTimes: PrayerTimeType, now = new Date()) {
 	};
 }
 
-export function buildPrayerSequence(adhanTime: Date, config: PrayerConfig = DEFAULT_SEQUENCE) {
+export function buildPrayerSequence(
+	adhanTime: Date,
+	config: PrayerConfig = DEFAULT_SEQUENCE,
+	prayer?: PrayerLabel
+) {
+	const override =
+		prayer && IQAMAH_PRAYERS.includes(prayer as IqamahPrayer)
+			? config[`iqamah${prayer as IqamahPrayer}`]
+			: undefined;
+	const iqamahMinutes =
+		typeof override === 'number' && Number.isFinite(override) && override >= 0
+			? override
+			: (config.beforeIqamah ?? 5);
 	const beforeAdhan = new Date(adhanTime.getTime() - (config?.beforeAdhan || 0) * MINUTE);
 	const adhanEnd = new Date(adhanTime.getTime() + (config?.adhanDuration || 0) * MINUTE);
-	const iqamahTime = new Date(adhanEnd.getTime() + (config?.beforeIqamah || 0) * MINUTE);
+	const iqamahTime = new Date(adhanEnd.getTime() + iqamahMinutes * MINUTE);
 	const prayerEnd = new Date(iqamahTime.getTime() + (config?.prayerDuration || 0) * MINUTE);
 
 	return {
@@ -263,7 +293,7 @@ export function createPrayerEngine(
 			return { prayer, state: 'FINISHED', timeRemaining: 0, nextTransition: null };
 		}
 
-		const t = buildPrayerSequence(adhanTime, config);
+		const t = buildPrayerSequence(adhanTime, config, prayer);
 
 		if (now < t.beforeAdhan)
 			return {
@@ -321,15 +351,13 @@ export function createPrayerEngine(
 		let targetPrayer: PrayerLabel | null = currentPrayer;
 
 		if (!targetPrayer) {
-			const current = getCurrentPrayer(prayerTimes, now);
+			const current = getCurrentPrayer(prayerTimes, now, Infinity);
 			// getCurrentPrayer deliberately has a broad display window. Only select it
 			// when its event sequence is actually still active, otherwise a completed
 			// prayer would repeatedly enter FINISHED instead of advancing.
 			if (
 				current &&
-				!['IDLE', 'FINISHED'].includes(
-					computeStateForPrayer(now, current.name, current.time).state
-				)
+				!['IDLE', 'FINISHED'].includes(computeStateForPrayer(now, current.name, current.time).state)
 			) {
 				targetPrayer = current.name;
 			} else {

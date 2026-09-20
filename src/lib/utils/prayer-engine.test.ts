@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
 import {
 	buildPrayerSequence,
+	getPrayerTimes,
 	createPrayerEngine,
 	type PrayerEventState,
 	type PrayerTimeType
@@ -76,15 +77,19 @@ describe('prayer engine boundaries', () => {
 		engine.update(new Date(at(27, 12, 24).getTime() + 5_000));
 		assert.equal(engine.getState()?.prayer, 'Ashar');
 		assert.equal(engine.getState()?.state, 'IDLE');
-		assert.deepEqual(events.map((event) => event.state), ['COUNTDOWN', 'FINISHED', 'IDLE']);
+		assert.deepEqual(
+			events.map((event) => event.state),
+			['COUNTDOWN', 'FINISHED', 'IDLE']
+		);
 	});
 
 	test('transitions notice prayers and does not remain pinned after notice', () => {
 		const prayerTimes = times();
-		assert.deepEqual(
-			stateAt(prayerTimes, [at(27, 4, 15), at(27, 4, 20), at(27, 4, 21)]),
-			['COUNTDOWN', 'NOTICE', 'FINISHED']
-		);
+		assert.deepEqual(stateAt(prayerTimes, [at(27, 4, 15), at(27, 4, 20), at(27, 4, 21)]), [
+			'COUNTDOWN',
+			'NOTICE',
+			'FINISHED'
+		]);
 		const engine = createPrayerEngine(prayerTimes, config);
 		engine.update(at(27, 4, 15));
 		engine.update(at(27, 4, 21));
@@ -95,12 +100,7 @@ describe('prayer engine boundaries', () => {
 	test('uses the Friday Jumuah sequence without iqamah or regular prayer states', () => {
 		const prayerTimes = times(28); // Friday
 		assert.deepEqual(
-			stateAt(prayerTimes, [
-				at(28, 11, 55),
-				at(28, 12),
-				at(28, 12, 7),
-				at(28, 12, 37)
-			]),
+			stateAt(prayerTimes, [at(28, 11, 55), at(28, 12), at(28, 12, 7), at(28, 12, 37)]),
 			['COUNTDOWN', 'ADHAN', 'JUMUAH', 'FINISHED']
 		);
 	});
@@ -111,4 +111,108 @@ describe('prayer engine boundaries', () => {
 		assert.equal(engine.getState()?.prayer, 'Ashar');
 		assert.equal(engine.getState()?.state, 'IDLE');
 	});
+});
+
+describe('per-prayer settings', () => {
+	test('applies signed adjustments without changing the calculation defaults', () => {
+		const date = at(27, 0);
+		const base = getPrayerTimes(date, -6.2474466, 107.1484521);
+		const adjusted = getPrayerTimes(date, -6.2474466, 107.1484521, 'shafi', 30, {
+			adjustmentImsyak: -1,
+			adjustmentSubuh: 2,
+			adjustmentSyuruq: -2,
+			adjustmentDzuhur: 3,
+			adjustmentAshar: -3,
+			adjustmentMaghrib: 4,
+			adjustmentIsya: 5
+		});
+		const offsets = {
+			Imsyak: 1,
+			Subuh: 2,
+			Syuruq: -2,
+			Dzuhur: 3,
+			Ashar: -3,
+			Maghrib: 4,
+			Isya: 5,
+			Tarawih: 5
+		};
+		for (const [prayer, offset] of Object.entries(offsets)) {
+			assert.equal(
+				adjusted[prayer as keyof PrayerTimeType].getTime() -
+					base[prayer as keyof PrayerTimeType].getTime(),
+				offset * minute
+			);
+		}
+	});
+
+	test('uses each daily prayer countdown and respects zero', () => {
+		const prayers = ['Subuh', 'Dzuhur', 'Ashar', 'Maghrib', 'Isya'] as const;
+		const overrides = {
+			iqamahSubuh: 15,
+			iqamahDzuhur: 10,
+			iqamahAshar: 8,
+			iqamahMaghrib: 0,
+			iqamahIsya: 12
+		};
+		for (const prayer of prayers) {
+			const sequence = buildPrayerSequence(times()[prayer], { ...config, ...overrides }, prayer);
+			assert.equal(
+				sequence.iqamahTime.getTime() - sequence.adhanEnd.getTime(),
+				overrides[`iqamah${prayer}`] * minute
+			);
+			const engine = createPrayerEngine(times(), { ...config, ...overrides });
+			engine.update(sequence.adhanEnd);
+			assert.equal(engine.getState()?.state, prayer === 'Maghrib' ? 'PRAYER' : 'IQAMAH');
+			assert.equal(engine.getState()?.prayer, prayer);
+		}
+	});
+
+	test('old configurations retain the shared countdown', () => {
+		const sequence = buildPrayerSequence(at(27, 12), config, 'Dzuhur');
+		assert.equal(
+			sequence.iqamahTime.getTime() - sequence.adhanEnd.getTime(),
+			config.beforeIqamah * minute
+		);
+	});
+
+	test('Friday Dzuhur keeps Jumuah even with a specific iqamah value', () => {
+		const engine = createPrayerEngine(times(28), { ...config, iqamahDzuhur: 15 });
+		engine.update(at(28, 12, 7));
+		assert.equal(engine.getState()?.state, 'JUMUAH');
+	});
+
+	test('adjusted times drive the adhan and iqamah transitions', () => {
+		const settings = { ...config, adjustmentDzuhur: 4, iqamahDzuhur: 12 };
+		const prayerTimes = getPrayerTimes(at(27, 0), -6.2474466, 107.1484521, 'shafi', 30, settings);
+		const engine = createPrayerEngine(prayerTimes, settings);
+		const adhan = prayerTimes.Dzuhur.getTime();
+		engine.update(new Date(adhan - minute));
+		assert.equal(engine.getState()?.state, 'COUNTDOWN');
+		assert.equal(engine.getState()?.nextTransition?.getTime(), adhan);
+		engine.update(new Date(adhan));
+		assert.equal(engine.getState()?.state, 'ADHAN');
+		engine.update(new Date(adhan + 7 * minute));
+		assert.equal(engine.getState()?.state, 'IQAMAH');
+		assert.equal(engine.getState()?.nextTransition?.getTime(), adhan + 19 * minute);
+	});
+
+	test('can resume a long iqamah countdown beyond the display highlight window', () => {
+		const engine = createPrayerEngine(times(), { ...config, iqamahDzuhur: 90 });
+		engine.update(at(27, 13, 10));
+		assert.equal(engine.getState()?.state, 'IQAMAH');
+		assert.equal(engine.getState()?.prayer, 'Dzuhur');
+		assert.equal(engine.getState()?.nextTransition?.getTime(), at(27, 13, 37).getTime());
+	});
+});
+
+test('missing iqamah settings default to five minutes while saved zero is preserved', () => {
+	for (const values of [undefined, {}, { beforeIqamah: undefined }]) {
+		const sequence = buildPrayerSequence(at(27, 12), values, 'Dzuhur');
+		assert.equal(sequence.iqamahTime.getTime() - sequence.adhanEnd.getTime(), 5 * minute);
+		const engine = createPrayerEngine(times(), values);
+		engine.update(at(27, 12, 7));
+		assert.equal(engine.getState()?.nextTransition?.getTime(), at(27, 12, 12).getTime());
+	}
+	const sequence = buildPrayerSequence(at(27, 12), { beforeIqamah: 0 }, 'Dzuhur');
+	assert.equal(sequence.iqamahTime.getTime(), sequence.adhanEnd.getTime());
 });

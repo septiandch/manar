@@ -2,7 +2,12 @@
 	import Separator from '$lib/components/ui/separator/separator.svelte';
 	import * as Card from '$lib/components/ui/card';
 	import { Button } from '$lib/components/ui/button';
-	import type { ConfigField, ConfigType } from '$lib/types/config';
+	import {
+		TIMED_PRAYERS,
+		IQAMAH_PRAYERS,
+		type ConfigField,
+		type ConfigType
+	} from '$lib/types/config';
 	import { Loader } from '@lucide/svelte';
 	import { onMount } from 'svelte';
 	import ConfigInput from './config-input.svelte';
@@ -18,12 +23,19 @@
 		beforeNotice: 5,
 		beforeAdhan: 5,
 		adhanDuration: 10,
-		beforeIqamah: 7,
+		beforeIqamah: 5,
 		prayerDuration: 10,
 		jumuahDuration: 30,
 		taraweehFromIsya: 30,
 		taraweehDuration: 60
 	};
+
+	function withPrayerDefaults(values: Partial<ConfigType> | null): ConfigType {
+		const result = { ...initialConfig, ...values };
+		for (const prayer of TIMED_PRAYERS) result[`adjustment${prayer}`] ??= 0;
+		for (const prayer of IQAMAH_PRAYERS) result[`iqamah${prayer}`] ??= result.beforeIqamah;
+		return result;
+	}
 
 	let logoUrl: string | undefined = $state(undefined);
 	let updatedAt: string | undefined = $state(undefined);
@@ -32,6 +44,26 @@
 	let configValues = $state<ConfigType>(initialConfig);
 
 	const fields: ConfigField[] = [
+		...TIMED_PRAYERS.map(
+			(prayer): ConfigField => ({
+				key: `adjustment${prayer}`,
+				type: 'number',
+				label: `${prayer} adjustment (minutes)`,
+				minValue: -180,
+				maxValue: 180,
+				withButton: true
+			})
+		),
+		...IQAMAH_PRAYERS.map(
+			(prayer): ConfigField => ({
+				key: `iqamah${prayer}`,
+				type: 'number',
+				label: `${prayer} iqamah countdown (minutes)`,
+				minValue: 0,
+				maxValue: 180,
+				withButton: true
+			})
+		),
 		{ key: 'logo', type: 'image', label: 'Logo', placeholder: 'Select file' },
 		{ key: 'title', type: 'string', label: 'Mosque name', placeholder: 'e.g. Masjid Al-Ikhlas' },
 		{ key: 'subtitle', type: 'string', label: 'Address or subtitle', placeholder: 'Subtitle' },
@@ -80,7 +112,7 @@
 		{
 			key: 'beforeIqamah',
 			type: 'number',
-			label: 'Iqamah countdown (minutes)',
+			label: 'Default iqamah countdown (minutes)',
 			placeholder: 'duration (minutes)',
 			minValue: 5,
 			withButton: true
@@ -148,6 +180,20 @@
 			keys: ['beforeNotice', 'beforeAdhan', 'adhanDuration', 'beforeIqamah', 'prayerDuration']
 		},
 		{
+			id: 'adjustments',
+			title: 'Prayer time adjustments',
+			description:
+				'Minutes added to calculated times: positive is later, negative is earlier. Imsyak follows adjusted Subuh minus 10 minutes, plus its own adjustment.',
+			keys: TIMED_PRAYERS.map((prayer) => `adjustment${prayer}`)
+		},
+		{
+			id: 'iqamah',
+			title: 'Iqamah countdown',
+			description:
+				'Minutes after the adzan screen ends. Set 0 to skip the countdown. Friday Dzuhur uses the Jumuah sequence instead.',
+			keys: IQAMAH_PRAYERS.map((prayer) => `iqamah${prayer}`)
+		},
+		{
 			id: 'special',
 			title: 'Jumuah & Taraweeh',
 			description: 'Configure Friday and Taraweeh screen timings in minutes.',
@@ -161,7 +207,8 @@
 		beforeNotice: 'Countdown before Imsyak and Syuruq.',
 		beforeAdhan: 'Countdown leading up to the prayer time.',
 		adhanDuration: 'How long the adzan message is displayed.',
-		beforeIqamah: 'Countdown after the adzan screen, before iqamah.',
+		beforeIqamah:
+			'Fallback for prayers without an individual countdown. Individual values below take priority.',
 		prayerDuration: 'How long the prayer screen stays visible.',
 		taraweehFromIsya: 'Time from Isya until the Taraweeh session.'
 	};
@@ -175,7 +222,7 @@
 			const data = await res.json();
 			loaded = true;
 
-			configValues = { ...configValues, ...data };
+			configValues = withPrayerDefaults(data);
 
 			logoUrl = data?.logo ?? undefined;
 			updatedAt = data?.updatedAt;
@@ -222,7 +269,7 @@
 			if (!res.ok) throw new Error(`Unable to save config (${res.status})`);
 
 			const { data } = await res.json();
-			configValues = { ...initialConfig, ...data };
+			configValues = withPrayerDefaults(data);
 			logoUrl = data.logo ?? undefined;
 			updatedAt = data.updatedAt;
 			savedValues = JSON.stringify(configValues);
@@ -333,7 +380,11 @@
 													: key === 'longitude'
 														? -180
 														: field.minValue}
-												maxValue={key === 'latitude' ? 90 : key === 'longitude' ? 180 : undefined}
+												maxValue={key === 'latitude'
+													? 90
+													: key === 'longitude'
+														? 180
+														: field.maxValue}
 												withButton={field.withButton}
 												bind:value={configValues[key] as number}
 											/>

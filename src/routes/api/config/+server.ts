@@ -1,3 +1,4 @@
+import { TIMED_PRAYERS, IQAMAH_PRAYERS } from '$lib/types/config';
 import { json } from '@sveltejs/kit';
 import fs from 'fs/promises';
 import path from 'path';
@@ -39,6 +40,23 @@ export const POST: RequestHandler = async ({ request }) => {
 
 	const form = await request.formData();
 	const data: Record<string, any> = {};
+	// Validate overrides before any file writes. Old configs may omit these fields.
+	const timingKeys = [
+		...TIMED_PRAYERS.map((prayer) => ({ key: `adjustment${prayer}`, min: -180 })),
+		...IQAMAH_PRAYERS.map((prayer) => ({ key: `iqamah${prayer}`, min: 0 }))
+	];
+	for (const { key, min } of timingKeys) {
+		if (!form.has(key)) continue;
+		const raw = form.get(key);
+		const value = typeof raw === 'string' && raw.trim() !== '' ? Number(raw) : NaN;
+		if (!Number.isInteger(value) || value < min || value > 180) {
+			return json(
+				{ error: `${key} must be a whole number between ${min} and 180 minutes.` },
+				{ status: 400 }
+			);
+		}
+		form.set(key, String(value));
+	}
 
 	// ───── Load existing config ─────
 	let existing: any = {};

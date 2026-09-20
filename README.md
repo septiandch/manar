@@ -53,6 +53,25 @@ The form also exposes `taraweehFromIsya` and `taraweehDuration`. These are not c
 
 The default form coordinates are `-6.2474466, 107.1484521`. Change them to the actual display location.
 
+### Per-prayer timing
+
+The config page includes individual minute adjustments for Imsyak, Subuh,
+Syuruq, Dzuhur, Ashar, Maghrib, and Isya. Positive adjustments move the time
+later; negative adjustments move it earlier. They are added to the existing
+calculation, and the adjusted times drive both the schedule and countdowns.
+Imsyak stays ten minutes before adjusted Subuh, plus its own adjustment.
+
+Subuh, Dzuhur, Ashar, Maghrib, and Isya each have an iqamah countdown measured
+from the end of the adzan screen. Zero skips the iqamah countdown. For example,
+12:00 adzan + 7 minutes adzan screen + 10 minutes iqamah = prayer at 12:17.
+Friday Dzuhur still uses the Jumuah sequence, which has no iqamah countdown.
+
+Existing configurations use zero adjustments and the shared `beforeIqamah`
+until individual values are saved. If the shared countdown is also missing, the fallback is 5 minutes. The fields are stored as `adjustmentSubuh`,
+`iqamahSubuh`, etc. Adjustments accept whole minutes from -180 to 180; iqamah
+countdowns accept 0 to 180. Saved settings reach the display through its existing
+live update connection. Check that adjusted prayer times remain in their intended order.
+
 ## Media and storage
 
 Use `/upload` to upload, reorder, or delete carousel media.

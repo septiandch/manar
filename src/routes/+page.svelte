@@ -35,7 +35,7 @@
 
 	let now = $derived($clockStore);
 
-	let prayerStore = $derived(createPrayerStore(clockStore, latitude, longitude));
+	let prayerStore = $derived(createPrayerStore(clockStore, latitude, longitude, config));
 	let prayerTimes = $derived($prayerStore);
 
 	onMount(() => {
