@@ -25,7 +25,7 @@ export function mirror(
 		peers.forEach((p) => p.close());
 		peers.clear();
 		pending.clear();
-		video.srcObject = null;
+		if (role === 'receiver') video.srcObject = null;
 		session = '';
 		status('DISCONNECTED');
 	};
@@ -67,7 +67,12 @@ export function mirror(
 			lastSignal = Date.now();
 			if (role === 'sender') send({ type: 'start' });
 		};
-		ws.onmessage = async (e) => {
+		let processing = Promise.resolve();
+		ws.onmessage = (event) => {
+			processing = processing.then(() => handleMessage(event));
+		};
+		async function handleMessage(e: MessageEvent) {
+			if (disposed) return;
 			lastSignal = Date.now();
 			try {
 				const m = JSON.parse(e.data);
@@ -115,9 +120,10 @@ export function mirror(
 						await p.setRemoteDescription(m.sdp);
 						for (const c of pending.get(id) || []) await p.addIceCandidate(c);
 						pending.delete(id);
-						status('MIRRORING');
+						// Receiver playback acknowledgement controls the live status.
 					}
 				}
+				if (m.type === 'playing' && role === 'sender') status('MIRRORING');
 				if (m.type === 'ice') {
 					const p = peers.get(id);
 					if (p?.remoteDescription) await p.addIceCandidate(m.candidate);
@@ -126,7 +132,7 @@ export function mirror(
 			} catch {
 				if (role === 'receiver') clear();
 			}
-		};
+		}
 		ws.onclose = () => {
 			onPairingVisibility?.(false);
 			onPairing?.('');
@@ -140,10 +146,13 @@ export function mirror(
 				);
 		};
 	}
-	video.onplaying = () => {
-		lastFrame = Date.now();
-		status('MIRRORING');
-	};
+	if (role === 'receiver')
+		video.onplaying = () => {
+			if (!session || disposed) return;
+			lastFrame = Date.now();
+			status('MIRRORING');
+			send({ type: 'playing', session });
+		};
 	const timer = setInterval(() => {
 		send({ type: 'ping' });
 		if (role === 'receiver' && video.srcObject) {
@@ -165,6 +174,7 @@ export function mirror(
 		clearInterval(timer);
 		clear();
 		stream?.getTracks().forEach((t) => t.stop());
+		video.srcObject = null;
 		video.onplaying = null;
 		window.removeEventListener('pagehide', close);
 	};

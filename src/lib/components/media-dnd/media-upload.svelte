@@ -40,13 +40,13 @@
 	const fileCount = $derived(fileNames.length);
 
 	const label = $derived(() => {
-		if (fileCount === 0) return 'Select file';
-		if (fileCount === 1) return '1 file selected';
-		return `${fileCount} files selected`;
+		if (fileCount === 0) return 'Pilih berkas';
+		if (fileCount === 1) return '1 berkas dipilih';
+		return `${fileCount} berkas dipilih`;
 	});
 </script>
 
-<h1 class="text-xl font-semibold">Select Image or Video</h1>
+<h1 class="text-xl font-semibold">Pilih gambar atau video</h1>
 
 <div class="flex w-full flex-col items-end gap-4">
 	<input bind:this={ref} type="file" multiple accept="image/*,video/*" {onchange} hidden />
@@ -68,7 +68,7 @@
 			<Loader />
 		{:else}
 			<Upload />
-			<span>Upload</span>
+			<span>Unggah</span>
 		{/if}
 	</Button>
 </div>

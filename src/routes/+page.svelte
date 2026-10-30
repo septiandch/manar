@@ -3,44 +3,37 @@
 	const items = [
 		{
 			href: '/display',
-			title: 'Display',
-			description: 'Open the prayer schedule and slideshow on your TV.',
+			title: 'Tampilan TV',
+			description: 'Tampilkan jadwal salat dan tayangan media di TV.',
 			icon: Monitor,
-			label: 'Open display'
+			label: 'Buka tampilan TV'
 		},
 		{
 			href: '/connect',
-			title: 'Cast your screen',
-			description: 'Connect your laptop and share a screen with the community.',
+			title: 'Bagikan layar',
+			description: 'Hubungkan laptop dan bagikan layar ke TV.',
 			icon: Cast,
-			label: 'Connect to TV'
+			label: 'Hubungkan ke TV'
 		},
 		{
 			href: '/config',
-			title: 'Settings',
-			description: 'Update mosque details, prayer times, and display preferences.',
+			title: 'Pengaturan',
+			description: 'Atur informasi masjid, waktu salat, dan tampilan TV.',
 			icon: Settings,
-			label: 'Manage settings'
+			label: 'Kelola pengaturan'
 		},
 		{
 			href: '/upload',
-			title: 'Media library',
-			description: 'Upload and arrange the images and videos on your display.',
+			title: 'Koleksi media',
+			description: 'Unggah dan susun gambar serta video untuk ditampilkan.',
 			icon: Images,
-			label: 'Manage media'
+			label: 'Kelola media'
 		}
 	];
 </script>
 
-<svelte:head><title>Manar | Home</title></svelte:head>
+<svelte:head><title>Manar | Beranda</title></svelte:head>
 <main class="mx-auto max-w-5xl px-5 py-10 sm:px-8 sm:py-16">
-	<p class="mb-3 text-sm font-semibold tracking-widest text-emerald-700 uppercase">
-		Welcome to Manar
-	</p>
-	<h1 class="text-3xl font-semibold tracking-tight sm:text-5xl">Your community, on display.</h1>
-	<p class="mt-4 max-w-xl text-lg text-slate-600">
-		Everything you need to keep your display up to date. Choose where you would like to go.
-	</p>
 	<div class="mt-10 grid gap-5 sm:grid-cols-2">
 		{#each items as item}<a
 				href={item.href}

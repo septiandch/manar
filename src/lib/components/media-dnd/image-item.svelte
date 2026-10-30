@@ -19,7 +19,7 @@
 		<button
 			type="button"
 			use:dragHandle
-			aria-label={`Reorder ${item.name}`}
+			aria-label={`Ubah urutan ${item.name}`}
 			class="shrink-0 cursor-grab touch-none rounded p-1 text-muted-foreground select-none active:cursor-grabbing"
 		>
 			<GripVertical />
@@ -52,7 +52,7 @@
 	<div class="flex shrink-0 flex-col justify-between gap-2">
 		<Button size="sm" variant="outline" class="h-8" href={item.url} download={item.name}>
 			<Download />
-			Download
+			Unduh
 		</Button>
 
 		<Button
@@ -61,7 +61,7 @@
 			size="sm"
 			onclick={() => onremove(item.name)}
 		>
-			<X /> Delete
+			<X /> Hapus
 		</Button>
 	</div>
 </div>

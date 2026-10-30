@@ -31,7 +31,8 @@ const server = createServer(async (req, res) => {
 				token
 					? { token }
 					: {
-							error: 'Code expired, already used, or too many attempts. Check the TV and try again.'
+							error:
+								'Kode kedaluwarsa, sudah digunakan, atau terlalu banyak percobaan. Periksa kode di TV dan coba lagi.'
 						}
 			)
 		);
@@ -121,11 +122,15 @@ server.on('upgrade', (req, socket, head) => {
 					stop();
 					return;
 				}
-				if (!session || m.session !== session || !['offer', 'answer', 'ice'].includes(m.type))
+				if (
+					!session ||
+					m.session !== session ||
+					!['offer', 'answer', 'ice', 'playing'].includes(m.type)
+				)
 					return;
 				if (
 					(m.type === 'offer' && role !== 'sender') ||
-					(m.type === 'answer' && role !== 'receiver')
+					(['answer', 'playing'].includes(m.type) && role !== 'receiver')
 				)
 					return;
 				if (role === 'receiver') send(sender, { ...m, id: c.id });

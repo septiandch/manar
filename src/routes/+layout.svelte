@@ -52,11 +52,9 @@
 				aria-label="Main navigation"
 				class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-5 py-5 sm:px-8"
 			>
-				<a href="/" class="text-2xl font-bold tracking-tight text-emerald-800"
-					>Manar<span class="ml-2 text-sm font-normal text-slate-500">Community display</span></a
-				>
+				<a href="/" class="text-2xl font-bold tracking-tight text-emerald-800">Manar</a>
 				<div class="flex flex-wrap gap-1">
-					{#each [{ href: '/', label: 'Home' }, { href: '/display', label: 'Display' }, { href: '/connect', label: 'Cast' }, { href: '/config', label: 'Settings' }, { href: '/upload', label: 'Media' }] as link}
+					{#each [{ href: '/', label: 'Beranda' }, { href: '/display', label: 'Tampilan TV' }, { href: '/connect', label: 'Bagikan layar' }, { href: '/config', label: 'Pengaturan' }, { href: '/upload', label: 'Media' }] as link}
 						<a
 							href={link.href}
 							aria-current={page.url.pathname === link.href ||
@@ -72,7 +70,7 @@
 		</header>
 		{@render children()}
 		<footer class="mx-auto max-w-6xl px-5 py-8 text-sm text-slate-500 sm:px-8">
-			Manar � A connected community
+			Manar | Media Syi'ar Al-Ikhlash
 		</footer>
 	</div>
 {/if}

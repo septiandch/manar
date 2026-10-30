@@ -48,7 +48,7 @@
 		error = '';
 		const normalized = code.normalize('NFKC').replace(/[\s-]/g, '');
 		if (!/^[0-9]{6}$/.test(normalized)) {
-			error = 'Enter the six-digit pairing code shown on the TV, for example 123456.';
+			error = 'Masukkan kode enam angka yang muncul di TV, misalnya 123456.';
 			return;
 		}
 		code = normalized;
@@ -64,7 +64,7 @@
 			localStorage.setItem('mirrorSenderToken', data.token);
 			await goto('/admin/mirror');
 		} catch (e) {
-			error = e instanceof Error ? e.message : 'Unable to connect. Please try again.';
+			error = e instanceof Error ? e.message : 'Tidak dapat terhubung. Silakan coba lagi.';
 		} finally {
 			busy = false;
 		}
@@ -74,8 +74,8 @@
 <main
 	class="mx-auto my-10 max-w-lg space-y-6 rounded-2xl border border-slate-200 bg-white p-8 shadow-sm"
 >
-	<h1 class="text-3xl font-bold">Connect to the display</h1>
-	<p>Enter the six-digit code shown on the TV. The code changes every two minutes.</p>
+	<h1 class="text-3xl font-bold">Hubungkan ke TV</h1>
+	<p>Masukkan kode enam angka yang muncul di TV. Kode berubah setiap dua menit.</p>
 	<form
 		novalidate
 		onsubmit={(e) => {
@@ -85,7 +85,7 @@
 		class="space-y-4"
 	>
 		<label class="block"
-			>Pairing code <input
+			>Kode penghubung <input
 				bind:value={code}
 				inputmode="numeric"
 				autocomplete="one-time-code"
@@ -99,7 +99,7 @@
 		<button
 			disabled={busy}
 			class="w-full rounded-xl bg-primary px-6 py-3 font-semibold text-primary-foreground disabled:opacity-50"
-			>{busy ? 'Connecting...' : 'Connect'}</button
+			>{busy ? 'Menghubungkan...' : 'Hubungkan'}</button
 		>
 	</form>
 	{#if error}<p id="pairing-error" role="alert">{error}</p>{/if}

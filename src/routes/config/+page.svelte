@@ -48,7 +48,7 @@
 			(prayer): ConfigField => ({
 				key: `adjustment${prayer}`,
 				type: 'number',
-				label: `${prayer} adjustment (minutes)`,
+				label: `${prayer} penyesuaian (menit)`,
 				minValue: -180,
 				maxValue: 180,
 				withButton: true
@@ -58,19 +58,19 @@
 			(prayer): ConfigField => ({
 				key: `iqamah${prayer}`,
 				type: 'number',
-				label: `${prayer} iqamah countdown (minutes)`,
+				label: `${prayer} hitung mundur ikamah (menit)`,
 				minValue: 0,
 				maxValue: 180,
 				withButton: true
 			})
 		),
-		{ key: 'logo', type: 'image', label: 'Logo', placeholder: 'Select file' },
-		{ key: 'title', type: 'string', label: 'Mosque name', placeholder: 'e.g. Masjid Al-Ikhlas' },
-		{ key: 'subtitle', type: 'string', label: 'Address or subtitle', placeholder: 'Subtitle' },
+		{ key: 'logo', type: 'image', label: 'Logo', placeholder: 'Pilih berkas' },
+		{ key: 'title', type: 'string', label: 'Nama masjid', placeholder: 'Contoh: Masjid Al-Ikhlas' },
+		{ key: 'subtitle', type: 'string', label: 'Alamat atau keterangan', placeholder: 'Keterangan' },
 		{
 			key: 'carouselDuration',
 			type: 'number',
-			label: 'Announcement duration (seconds)',
+			label: 'Durasi tayangan media (detik)',
 			placeholder: 'duration (second)',
 			minValue: 5,
 			withButton: true
@@ -78,74 +78,74 @@
 		{
 			key: 'hijriAdj',
 			type: 'number',
-			label: 'Hijri date adjustment (days)',
+			label: 'Penyesuaian tanggal Hijriah (hari)',
 			placeholder: 'day',
 			minValue: -3,
 			withButton: true
 		},
-		{ key: 'latitude', type: 'number', label: 'Latitude', placeholder: 'Latitude' },
-		{ key: 'longitude', type: 'number', label: 'Longitude', placeholder: 'Longitude' },
+		{ key: 'latitude', type: 'number', label: 'Lintang', placeholder: 'Lintang' },
+		{ key: 'longitude', type: 'number', label: 'Bujur', placeholder: 'Bujur' },
 		{
 			key: 'beforeNotice',
 			type: 'number',
-			label: 'Imsyak/Syuruq countdown (minutes)',
-			placeholder: 'duration (minutes)',
+			label: 'Hitung mundur Imsyak/Syuruq (menit)',
+			placeholder: 'durasi (menit)',
 			minValue: 0,
 			withButton: true
 		},
 		{
 			key: 'beforeAdhan',
 			type: 'number',
-			label: 'Adzan countdown (minutes)',
-			placeholder: 'duration (minutes)',
+			label: 'Hitung mundur azan (menit)',
+			placeholder: 'durasi (menit)',
 			minValue: 1,
 			withButton: true
 		},
 		{
 			key: 'adhanDuration',
 			type: 'number',
-			label: 'Adzan duration (minutes)',
-			placeholder: 'duration (minutes)',
+			label: 'Durasi tampilan azan (menit)',
+			placeholder: 'durasi (menit)',
 			minValue: 5,
 			withButton: true
 		},
 		{
 			key: 'beforeIqamah',
 			type: 'number',
-			label: 'Default iqamah countdown (minutes)',
-			placeholder: 'duration (minutes)',
+			label: 'Default hitung mundur ikamah (menit)',
+			placeholder: 'durasi (menit)',
 			minValue: 5,
 			withButton: true
 		},
 		{
 			key: 'prayerDuration',
 			type: 'number',
-			label: 'Prayer duration (minutes)',
-			placeholder: 'duration (minutes)',
+			label: 'Durasi tampilan salat (menit)',
+			placeholder: 'durasi (menit)',
 			minValue: 5,
 			withButton: true
 		},
 		{
 			key: 'jumuahDuration',
 			type: 'number',
-			label: 'Jumuah duration (minutes)',
-			placeholder: 'duration (minutes)',
+			label: 'Durasi salat Jumat (menit)',
+			placeholder: 'durasi (menit)',
 			minValue: 5,
 			withButton: true
 		},
 		{
 			key: 'taraweehFromIsya',
 			type: 'number',
-			label: 'Isya to Taraweeh time (minutes)',
-			placeholder: 'duration (minutes)',
+			label: 'Jeda Isya ke Tarawih (menit)',
+			placeholder: 'durasi (menit)',
 			minValue: 0,
 			withButton: true
 		},
 		{
 			key: 'taraweehDuration',
 			type: 'number',
-			label: 'Taraweeh Duration (minutes)',
-			placeholder: 'duration (minutes)',
+			label: 'Durasi Tarawih (menit)',
+			placeholder: 'durasi (menit)',
 			minValue: 0,
 			withButton: true
 		}
@@ -162,62 +162,62 @@
 	const sections = [
 		{
 			id: 'identity',
-			title: 'Masjid Information',
-			description: 'Personalise your display name, logo and announcements.',
+			title: 'Informasi masjid',
+			description: 'Atur nama masjid, logo, dan tayangan informasi.',
 			keys: ['logo', 'title', 'subtitle', 'carouselDuration']
 		},
 		{
 			id: 'location',
-			title: 'Location & calendar',
+			title: 'Lokasi dan kalender',
 			description:
-				'Use the mosque’s decimal coordinates. Latitude: -90 to 90. Longitude: -180 to 180. Hijri adjustment is measured in days.',
+				'Gunakan koordinat desimal masjid. Lintang: -90 hingga 90. Bujur: -180 hingga 180. Penyesuaian Hijriah dalam hari.',
 			keys: ['latitude', 'longitude', 'hijriAdj']
 		},
 		{
 			id: 'prayer',
-			title: 'Daily prayer timings',
-			description: 'Set the countdown and screen durations. All values below are in minutes.',
+			title: 'Waktu salat harian',
+			description: 'Atur hitung mundur dan durasi tampilan. Semua nilai di bawah dalam menit.',
 			keys: ['beforeNotice', 'beforeAdhan', 'adhanDuration', 'beforeIqamah', 'prayerDuration']
 		},
 		{
 			id: 'adjustments',
-			title: 'Prayer time adjustments',
+			title: 'Penyesuaian waktu salat',
 			description:
-				'Minutes added to calculated times: positive is later, negative is earlier. Imsyak follows adjusted Subuh minus 10 minutes, plus its own adjustment.',
+				'Nilai positif memundurkan waktu, nilai negatif memajukan waktu. Imsyak mengikuti Subuh dikurangi 10 menit, ditambah penyesuaiannya sendiri.',
 			keys: TIMED_PRAYERS.map((prayer) => `adjustment${prayer}`)
 		},
 		{
 			id: 'iqamah',
-			title: 'Iqamah countdown',
+			title: 'Hitung mundur ikamah',
 			description:
-				'Minutes after the adzan screen ends. Set 0 to skip the countdown. Friday Dzuhur uses the Jumuah sequence instead.',
+				'Dihitung sejak tampilan azan berakhir. Isi 0 untuk melewati hitung mundur. Dzuhur hari Jumat mengikuti rangkaian salat Jumat.',
 			keys: IQAMAH_PRAYERS.map((prayer) => `iqamah${prayer}`)
 		},
 		{
 			id: 'special',
-			title: 'Jumuah & Taraweeh',
-			description: 'Configure Friday and Taraweeh screen timings in minutes.',
+			title: 'Jumat dan Tarawih',
+			description: 'Atur durasi tampilan Jumat dan Tarawih dalam menit.',
 			keys: ['jumuahDuration', 'taraweehFromIsya', 'taraweehDuration']
 		}
 	];
 	const help: Partial<Record<keyof ConfigType, string>> = {
-		logo: 'JPG, PNG, WebP or SVG. Maximum 5 MB.',
-		carouselDuration: 'Seconds each announcement stays on screen.',
-		hijriAdj: 'Use 0 for no adjustment, or a negative value for an earlier date.',
-		beforeNotice: 'Countdown before Imsyak and Syuruq.',
-		beforeAdhan: 'Countdown leading up to the prayer time.',
-		adhanDuration: 'How long the adzan message is displayed.',
+		logo: 'JPG, PNG, WebP, atau SVG. Maksimal 5 MB.',
+		carouselDuration: 'Lama setiap media ditampilkan, dalam detik.',
+		hijriAdj: 'Isi 0 tanpa penyesuaian, atau nilai negatif untuk memundurkan tanggal.',
+		beforeNotice: 'Hitung mundur sebelum Imsyak dan Syuruq.',
+		beforeAdhan: 'Hitung mundur menjelang waktu salat.',
+		adhanDuration: 'Lama pesan azan ditampilkan.',
 		beforeIqamah:
-			'Fallback for prayers without an individual countdown. Individual values below take priority.',
-		prayerDuration: 'How long the prayer screen stays visible.',
-		taraweehFromIsya: 'Time from Isya until the Taraweeh session.'
+			'Digunakan jika hitung mundur per salat belum diatur. Pengaturan per salat di bawah lebih diutamakan.',
+		prayerDuration: 'Lama tampilan salat ditampilkan.',
+		taraweehFromIsya: 'Jeda dari Isya hingga Tarawih.'
 	};
 	async function loadConfig() {
 		loading = true;
 		error = '';
 		try {
 			const res = await fetch('/api/config');
-			if (!res.ok) throw new Error(`Unable to load config (${res.status})`);
+			if (!res.ok) throw new Error(`Tidak dapat memuat pengaturan (${res.status})`);
 
 			const data = await res.json();
 			loaded = true;
@@ -228,7 +228,7 @@
 			updatedAt = data?.updatedAt;
 			savedValues = JSON.stringify(configValues);
 		} catch (cause) {
-			error = cause instanceof Error ? cause.message : 'Something went wrong. Please try again.';
+			error = cause instanceof Error ? cause.message : 'Terjadi kesalahan. Silakan coba lagi.';
 		} finally {
 			loading = false;
 		}
@@ -266,16 +266,16 @@
 				method: 'POST',
 				body: formData
 			});
-			if (!res.ok) throw new Error(`Unable to save config (${res.status})`);
+			if (!res.ok) throw new Error(`Tidak dapat menyimpan pengaturan (${res.status})`);
 
 			const { data } = await res.json();
 			configValues = withPrayerDefaults(data);
 			logoUrl = data.logo ?? undefined;
 			updatedAt = data.updatedAt;
 			savedValues = JSON.stringify(configValues);
-			success = 'Settings saved. Your display has been updated.';
+			success = 'Pengaturan tersimpan. Tampilan TV telah diperbarui.';
 		} catch (cause) {
-			error = cause instanceof Error ? cause.message : 'Something went wrong. Please try again.';
+			error = cause instanceof Error ? cause.message : 'Terjadi kesalahan. Silakan coba lagi.';
 		} finally {
 			loading = false;
 			saving = false;
@@ -283,16 +283,16 @@
 	}
 </script>
 
-<svelte:head><title>Display settings | Manar</title></svelte:head>
+<svelte:head><title>Pengaturan tampilan | Manar</title></svelte:head>
 
 <div class="mx-auto w-full max-w-5xl space-y-6 px-5 py-10 sm:px-8">
 	<header class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 		<div>
-			<h1 class="text-3xl font-semibold">Settings</h1>
+			<h1 class="text-3xl font-semibold">Pengaturan</h1>
 		</div>
 		<div class="flex flex-wrap gap-2">
-			<Button href="/display" class="min-h-8">Open display</Button>
-			<Button href="/upload" class="min-h-8">Manage media</Button>
+			<Button href="/display" class="min-h-8">Buka tampilan TV</Button>
+			<Button href="/upload" class="min-h-8">Kelola media</Button>
 		</div>
 	</header>
 
@@ -304,17 +304,17 @@
 			>
 				<p>{error}</p>
 				{#if !loaded}<Button type="button" variant="outline" onclick={loadConfig} disabled={loading}
-						>Try again</Button
+						>Coba lagi</Button
 					>{/if}
 			</div>
 		{/if}
 		{#if loading && !loaded}
 			<div role="status" class="flex items-center justify-center gap-3 rounded-xl bg-white p-12">
-				<Loader class="size-5 animate-spin motion-reduce:animate-none" /> Loading settings…
+				<Loader class="size-5 animate-spin motion-reduce:animate-none" /> Memuat pengaturan…
 			</div>
 		{/if}
 		{#if loaded}
-			<nav aria-label="Settings sections" class="mb-6 flex hidden flex-wrap gap-2">
+			<nav aria-label="Bagian pengaturan" class="mb-6 flex hidden flex-wrap gap-2">
 				{#each sections as section}
 					<Button
 						href={`#${section.id}`}
@@ -399,15 +399,15 @@
 					class="sticky bottom-0 z-10 flex flex-col gap-3 border-t border-gray-200 bg-foreground py-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:flex-row sm:items-center sm:justify-between"
 				>
 					<div role="status" aria-live="polite" class="text-sm text-slate-600">
-						{#if saving}Saving settings…
-						{:else if dirty}You have unsaved changes.
+						{#if saving}Menyimpan pengaturan...
+						{:else if dirty}Ada perubahan yang belum disimpan.
 						{:else if success}<span class="text-emerald-700">{success}</span>
-						{:else if updatedAt}Last saved: {new Date(updatedAt).toLocaleString()}
-						{:else}Save your settings to update the display.{/if}
+						{:else if updatedAt}Terakhir disimpan: {new Date(updatedAt).toLocaleString('id-ID')}
+						{:else}Simpan pengaturan untuk memperbarui tampilan TV.{/if}
 					</div>
 					<Button type="submit" disabled={loading || saving} class="min-h-12 w-full px-6 sm:w-auto">
 						{#if saving}<Loader class="size-4 animate-spin motion-reduce:animate-none" />{/if}
-						{saving ? 'Saving…' : 'Save settings'}
+						{saving ? 'Menyimpan...' : 'Simpan pengaturan'}
 					</Button>
 				</div>
 			</form>

@@ -113,7 +113,7 @@
 					variant="outline"
 					class="size-11 shrink-0 bg-white text-slate-900"
 					disabled={disabled || (minValue !== undefined && Number(value) <= minValue)}
-					aria-label={`Decrease ${label}`}
+					aria-label={`Kurangi ${label}`}
 					onclick={() => (value = Math.max(minValue ?? -Infinity, (Number(value) || 0) - 1))}
 				>
 					<Minus class="size-4" />
@@ -138,7 +138,7 @@
 					variant="outline"
 					class="size-11 shrink-0 bg-white text-slate-900"
 					disabled={disabled || (maxValue !== undefined && Number(value) >= maxValue)}
-					aria-label={`Increase ${label}`}
+					aria-label={`Tambah ${label}`}
 					onclick={() => (value = Math.min(maxValue ?? Infinity, (Number(value) || 0) + 1))}
 				>
 					<Plus class="size-4" />
