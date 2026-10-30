@@ -100,6 +100,10 @@
 	});
 </script>
 
+<svelte:head>
+	<link rel="stylesheet" href="/display-cursor.css" />
+</svelte:head>
+
 <div class="flex h-screen w-screen justify-center gap-4 bg-background p-4">
 	<div class="flex h-full min-h-0 w-full flex-col items-stretch gap-2">
 		<div class="flex h-24 w-full items-center justify-between">

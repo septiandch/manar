@@ -1,0 +1,8 @@
+/* Loaded in the display document head, before client hydration. */
+html,
+body,
+body *,
+body *::before,
+body *::after {
+	cursor: none !important;
+}

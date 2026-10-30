@@ -16,9 +16,14 @@ if address.is_loopback or address.is_unspecified or address.is_multicast:
 PY
 printf 'Installing Manar with HTTPS for %s. Keep this IP reserved in your router.\n' "$address"
 echo 'The app is deployed from the remote repository/branch in /etc/manar.conf; push your changes before installing.'
+export MANAR_DESKTOP_USER="$SUDO_USER"
 bash "$source_dir/setup.sh"
 bash "$source_dir/setup-casting.sh" "$address"
-# setup-casting configures the desktop account when invoked through sudo.
+# Refuse to report success if the desktop still has HTTP startup settings.
+desktop_home=$(getent passwd "$MANAR_DESKTOP_USER" | cut -d: -f6)
+grep -q '^MANAR_DISPLAY_URL=https://localhost/display?displayToken=.' "$desktop_home/.config/manar/display.env" || {
+ echo 'HTTPS display startup configuration missing; installation incomplete.' >&2; exit 1;
+}
 printf '\nInstallation complete. Reboot the Pi: sudo reboot\n'
 printf 'Laptop connection page: https://%s/connect\n' "$address"
 printf 'Trust the local CA on each remote device before connecting. See /opt/manar/shared/casting-rootCA.crt\n'

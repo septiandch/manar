@@ -11,6 +11,13 @@ flock -n 9 || exit 0
 MANAR_DISPLAY_URL=http://localhost:5000/display
 if [[ -f $HOME/.config/manar/display.env ]]; then
  source "$HOME/.config/manar/display.env"
+elif [[ -f /opt/manar/shared/casting-rootCA.crt ]]; then
+ echo 'HTTPS casting is installed but display.env is missing for this desktop user. Rerun install.sh through sudo from this user.' >&2
+ exit 1
+fi
+if [[ -f /opt/manar/shared/casting-rootCA.crt && $MANAR_DISPLAY_URL != https:* ]]; then
+ echo 'Casting is installed but browser startup still uses HTTP. Rerun setup-casting.sh through sudo from this desktop user.' >&2
+ exit 1
 fi
 case "$MANAR_DISPLAY_URL" in
  https://localhost/\?displayToken=*) MANAR_DISPLAY_URL="https://localhost/display?${MANAR_DISPLAY_URL#*\?}" ;;

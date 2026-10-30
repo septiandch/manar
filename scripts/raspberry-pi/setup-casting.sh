@@ -74,19 +74,8 @@ server {
  }
 }
 EOF
-nginx -t
-runuser -u manar -- env HOME=/opt/manar PM2_HOME=/opt/manar/.pm2 pm2 startOrRestart /opt/manar/ecosystem.config.cjs --update-env
-runuser -u manar -- env HOME=/opt/manar PM2_HOME=/opt/manar/.pm2 pm2 save
-systemctl reload nginx
-curl --fail --cacert "$CAROOT/rootCA.pem" "https://$address/api/version"
-echo
-printf 'Casting configured. Install /opt/manar/shared/casting-rootCA.crt as a trusted root on the laptop and TV.\n'
-printf 'Then open https://%s/connect on the laptop.\n' "$address"
-printf 'For one-time TV enrollment, read MIRROR_DISPLAY_TOKEN with sudo cat /opt/manar/shared/mirror.env and open https://%s/display?displayToken=TOKEN\n' "$address"
-printf 'Keep the private CA key in /etc/manar/casting/ca private. Rerun with the new IP if the Pi address changes.\n'
-
 # Enroll the Pi desktop browser without manual token entry. Preserve secrets on rerun.
-desktop_user=${SUDO_USER:-}
+desktop_user=${MANAR_DESKTOP_USER:-${SUDO_USER:-}}
 if [[ -n $desktop_user && $desktop_user != root ]]; then
  desktop_home=$(getent passwd "$desktop_user" | cut -d: -f6)
  desktop_group=$(id -gn "$desktop_user")
@@ -102,4 +91,18 @@ if [[ -n $desktop_user && $desktop_user != root ]]; then
  runuser -u "$desktop_user" -- env HOME="$desktop_home" certutil -A -d "sql:$desktop_home/.pki/nssdb" -n 'Manar LAN casting CA' -t 'C,,' -i /opt/manar/shared/casting-rootCA.crt
  install -m 755 "$source_dir/browser.sh" /usr/local/bin/manar-browser
  echo 'Pi desktop browser enrolled automatically. Close Chromium and reopen it, or reboot.'
+else
+ echo 'Desktop account unavailable. Run this script through sudo from the Pi desktop user.' >&2
+ exit 1
 fi
+
+nginx -t
+runuser -u manar -- env HOME=/opt/manar PM2_HOME=/opt/manar/.pm2 pm2 startOrRestart /opt/manar/ecosystem.config.cjs --update-env
+runuser -u manar -- env HOME=/opt/manar PM2_HOME=/opt/manar/.pm2 pm2 save
+systemctl reload nginx
+curl --fail --cacert "$CAROOT/rootCA.pem" "https://$address/api/version"
+echo
+printf 'Casting configured. Install /opt/manar/shared/casting-rootCA.crt as a trusted root on the laptop and TV.\n'
+printf 'Then open https://%s/connect on the laptop.\n' "$address"
+printf 'For one-time TV enrollment, read MIRROR_DISPLAY_TOKEN with sudo cat /opt/manar/shared/mirror.env and open https://%s/display?displayToken=TOKEN\n' "$address"
+printf 'Keep the private CA key in /etc/manar/casting/ca private. Rerun with the new IP if the Pi address changes.\n'
