@@ -15,7 +15,7 @@ The development server opens at `http://localhost:5000` and listens on network i
 
 1. Open `/config`, enter the mosque title, subtitle, coordinates, and timing preferences, then save.
 2. Open `/upload` to add and arrange announcement images or videos.
-3. Open `/` on the display device and enable the browser's fullscreen mode.
+3. Open `/display` on the display device and enable the browser's fullscreen mode.
 
 Set the display device's date, time, and timezone to the mosque's local timezone. Prayer time formatting currently uses the device timezone.
 
@@ -112,13 +112,23 @@ The implementation inherits the preset's adjustments and rounding. It does not f
 
 The test command uses Node's TypeScript stripping support.
 
-For countdown development, `src/lib/stores/clock.ts` provides `createDebugClock(startTime, speed)`. Open `/?debug` to select `debugClock` and simulate prayer transitions. Open `/` without the `debug` parameter to use the real clock.
+For countdown development, `src/lib/stores/clock.ts` provides `createDebugClock(startTime, speed)`. Open `/display?debug` to select `debugClock` and simulate prayer transitions. Open `/display` without the `debug` parameter to use the real clock.
 Set a custom debug starting date and time with `/?debug&datetime=2026-09-19T11:45:52`.
 Without a timezone suffix, the value uses the device's local timezone. Use `Z` for
 UTC, or encode an explicit positive offset, for example
 `/?debug&datetime=2026-09-19T11:45:52%2B07:00`. The custom clock advances at normal
 speed. Missing or invalid datetime values fall back to the default `debugClock`;
 `datetime` is ignored unless `debug` is present.
+
+## One-command Raspberry Pi HTTPS setup
+
+From an updated checkout on 64-bit Raspberry Pi OS Desktop:
+
+```sh
+sudo bash scripts/raspberry-pi/install.sh
+```
+
+This installs the app, automatic updates, HTTPS, casting credentials, and the Pi display browser. You can pass the Pi LAN IP as the last argument. Push your changes first: deployment builds the configured remote branch. Trust the generated CA on your laptop once, then open `https://PI-IP/connect`. See the [Pi installation guide](scripts/raspberry-pi/README.md#single-command-https-installation-recommended) for device trust, external TVs, and requirements.
 
 ## Raspberry Pi deployment
 
@@ -185,7 +195,7 @@ hostname -I
 PM2 should show `manar` online. On the Pi, visit `http://localhost:5000/`.
 On a phone or laptop on the same Wi-Fi, use the Pi's IPv4 address instead:
 
-- `http://192.168.1.50:5000/` ? display (replace the example IP).
+- `http://192.168.1.50:5000/display` ? display (replace the example IP).
 - `http://192.168.1.50:5000/config` ? mosque settings.
 - `http://192.168.1.50:5000/upload` ? media uploads.
 
@@ -230,7 +240,8 @@ Run from the project directory so the storage paths resolve consistently. Config
 ## Project layout
 
 ```text
-src/routes/+page.svelte               Main display
+src/routes/+page.svelte               Home menu
+src/routes/display/                  TV display
 src/routes/config/                   Configuration form
 src/routes/upload/                   Media management
 src/routes/api/                      Configuration, media, and event endpoints

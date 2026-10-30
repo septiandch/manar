@@ -17,10 +17,11 @@ fi
 run git --git-dir="$root/repo.git" fetch --prune origin '+refs/heads/*:refs/heads/*'
 branch=${BRANCH:-$(run git --git-dir="$root/repo.git" symbolic-ref --short HEAD)}
 commit=$(run git --git-dir="$root/repo.git" rev-parse "refs/heads/$branch^{commit}")
+echo "Remote branch: $branch; target commit: $commit"
 old=
 if [[ -L $root/current ]]; then old=$(readlink -f "$root/current"); fi
 if [[ -n $old && -f $old/.release-commit && $(cat "$old/.release-commit") == "$commit" ]]; then
-  echo "Already running $commit"
+  echo "Already running $commit (remote branch: $branch). Only committed and pushed changes are deployed."
   exit 0
 fi
 release=$(run mktemp -d "$root/releases/${commit:0:12}.XXXXXX")
@@ -57,12 +58,14 @@ test -f build/index.js
 printf '%s\n' "$commit" > .release-commit
 # Smoke-test with isolated storage, never against the live writable data.
 run node --input-type=module -e 'import net from "node:net"; const s=net.createServer(); s.on("error",()=>process.exit(1)); s.listen(3001,"127.0.0.1",()=>s.close());'
-run env HOST=127.0.0.1 PORT=3001 ORIGIN=http://localhost:5000 node build/index.js &
+entry=build/index.js
+[[ ! -f server.mjs ]] || entry=server.mjs
+run env HOST=127.0.0.1 PORT=3001 ORIGIN=http://localhost:5000 node "$entry" &
 candidate_pid=$!
 healthy() {
   local port=$1
   for ((i=0; i<60; i++)); do
-    if curl --fail --silent --max-time 2 "http://127.0.0.1:$port/" >/dev/null; then return 0; fi
+    if curl --fail --silent --max-time 2 "http://127.0.0.1:$port/" >/dev/null && curl --fail --silent --max-time 2 "http://127.0.0.1:$port/display" >/dev/null; then return 0; fi
     sleep 1
   done
   return 1
@@ -83,6 +86,11 @@ activated=1
 mv -Tf "$root/current.next" "$root/current"
 activate
 healthy 3000
+# Verify the process actually serves this release, not a stale PM2 process.
+if [[ -f src/routes/api/version/+server.ts ]]; then
+  live=$(curl --fail --silent --max-time 5 http://127.0.0.1:3000/api/version)
+  printf '%s' "$live" | node --input-type=module -e 'let s=""; for await(const c of process.stdin)s+=c; if(JSON.parse(s).version!==process.argv[1])process.exit(1)' "$commit"
+fi
 run pm2 save
 # Record the successfully activated release.
 printf '%s\n' "$commit" > "$root/shared/version"

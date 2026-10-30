@@ -64,6 +64,9 @@ cat > /usr/local/bin/manar-server <<'EOF'
 #!/usr/bin/env bash
 set -e
 cd /opt/manar/current
+if [[ -f server.mjs && -f /opt/manar/shared/mirror.env ]]; then
+  exec /usr/local/bin/node --env-file=/opt/manar/shared/mirror.env server.mjs
+fi
 exec /usr/local/bin/node build/index.js
 EOF
 chmod 755 /usr/local/bin/manar-server

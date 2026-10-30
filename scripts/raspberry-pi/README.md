@@ -46,8 +46,7 @@ the `manar` service account, independently of your desktop user's Git credential
 
 Setup installs Node 22, pnpm 10, PM2 6, nginx, and Chromium. It uses a separate
 `manar` service account for PM2, builds the app under `/opt/manar/releases`, and
-configures nginx on IPv4 port 5000. The Node backend listens only on loopback port
-3000. nginx serves writable uploads and supplies the host/protocol headers so
+configures nginx on IPv4 port 5000. The Node backend listens only on loopback port 3000. nginx serves writable uploads and supplies the host/protocol headers so
 forms work from both localhost and the Pi's LAN address.
 
 PM2's startup service restores the saved app at boot. The normal Raspberry Pi
@@ -204,15 +203,15 @@ sudo systemctl disable --now manar-update.timer
 
 ## 7. Storage and backups
 
-| Path | Purpose |
-| --- | --- |
-| `/opt/manar/shared/data` | Mosque settings |
-| `/opt/manar/shared/static/uploads` | Media, logos, and ordering |
-| `/opt/manar/releases` | Built releases |
-| `/opt/manar/current` | Active release symlink |
-| `/opt/manar/.pm2` | PM2 state and server logs |
-| `/opt/manar/ecosystem.config.cjs` | PM2 application definition |
-| `/etc/manar.conf` | Update repository and branch |
+| Path                                | Purpose                        |
+| ----------------------------------- | ------------------------------ |
+| `/opt/manar/shared/data`            | Mosque settings                |
+| `/opt/manar/shared/static/uploads`  | Media, logos, and ordering     |
+| `/opt/manar/releases`               | Built releases                 |
+| `/opt/manar/current`                | Active release symlink         |
+| `/opt/manar/.pm2`                   | PM2 state and server logs      |
+| `/opt/manar/ecosystem.config.cjs`   | PM2 application definition     |
+| `/etc/manar.conf`                   | Update repository and branch   |
 | `~/.config/autostart/manar.desktop` | Desktop user's browser startup |
 
 To back up, stop the update timer, wait for any active update to finish, then:
@@ -254,7 +253,6 @@ them after startup. In Chromium's DevTools console, compare `screen.width`,
 `screen.height`, `innerWidth`, `innerHeight`, and `devicePixelRatio` to distinguish
 physical output settings from browser zoom/window sizing.
 
-
 ### Restore pages prompt after startup
 
 The launcher includes `--hide-crash-restore-bubble` to suppress Chromium's
@@ -268,7 +266,6 @@ sudo reboot
 
 This applies to Manar's browser launcher; other Chromium startup entries need
 their own flag. It hides the recovery prompt without deleting the browser profile.
-
 
 ### Small browser window or keyring prompt
 
@@ -289,7 +286,6 @@ from a graphical desktop terminal, or reboot. An already running browser profile
 may reuse its existing window and ignore startup flags. If the window is still
 small, focus Chromium and press F11 to enter fullscreen. This does not require
 reinstalling PM2 or changing the display resolution.
-
 
 For browser errors, as the desktop user:
 
@@ -315,3 +311,74 @@ second Wi-Fi device must be verified on the Pi; they cannot be verified on Windo
 References: [PM2 boot startup](https://pm2.keymetrics.io/docs/usage/startup/),
 [SvelteKit proxy headers](https://svelte.dev/docs/kit/adapter-node), and
 [Raspberry Pi desktop autostart](https://github.com/raspberrypi-ui/raspberrypi-ui-mods/blob/master/etc/xdg/labwc/autostart).
+
+## LAN screen casting setup
+
+After committing and pushing the changes, update the checkout on the Pi and deploy the application:
+
+```sh
+cd ~/manar
+ git pull --ff-only
+sudo install -m 755 scripts/raspberry-pi/update.sh /usr/local/bin/manar-update
+sudo systemctl start manar-update.service
+sudo journalctl -u manar-update.service -n 80 --no-pager
+sudo bash scripts/raspberry-pi/setup-casting.sh 192.168.1.50
+```
+
+Replace the IP with the Pi's reserved LAN IPv4 address. The casting installer requires the existing PM2 installation and a deployed release containing server.mjs. It installs mkcert/nginx, preserves generated secrets in /opt/manar/shared/mirror.env (mode 600), switches the PM2 launcher to server.mjs, adds HTTPS on port 443 and WebSocket forwarding, and preserves the HTTP listener on port 5000. It does not change firewall rules or router settings. Allow LAN TCP 443 and LAN WebRTC traffic; do not expose this installation to the internet.
+
+Install /opt/manar/shared/casting-rootCA.crt as a trusted root on the laptop and TV. On Windows use the certificate import wizard and Trusted Root Certification Authorities, then restart the browser. Android TV certificate installation varies; if unsupported, use a domain you own and a publicly trusted certificate instead. Do not disable certificate checking. Keep /etc/manar/casting/ca/rootCA-key.pem private. Reserve the Pi IP in your router; rerun setup-casting.sh if it changes or before the server certificate expires (inspect with openssl x509 -in /etc/manar/casting/server.pem -noout -dates). Renewal is manual.
+
+Read the display secret locally using sudo cat /opt/manar/shared/mirror.env. Open https://PI-IP/display?displayToken=DISPLAY_SECRET once in the TV browser, then remove the query from its address. Enroll the Pi's own Chromium the same way if used as a receiver; its default HTTP localhost profile has separate localStorage from HTTPS. Open https://PI-IP/connect on the laptop and enter the TV code. Any paired sender controls the installation's enrolled displays. HTTPS trust and display enrollment are the two manual steps that cannot safely be provisioned remotely by this script.
+
+The local basic-ssl Vite plugin is for development; it is not used by this production installer. The main setup.sh retains casting support when rerun if mirror.env exists, but an existing custom nginx HTTPS listener may conflict with port 443. Review nginx -t output and existing HTTPS configuration in that case. The installer backs up its own previous nginx configuration; it does not rewrite other HTTPS configurations.
+
+## When automatic updates appear to do nothing
+
+The timer checks daily at 03:00 plus up to 15 minutes of delay; it deploys the remote branch in /etc/manar.conf, not the checkout you edit. Changes must be committed and pushed first. Use:
+
+```sh
+sudo cat /etc/manar.conf
+systemctl list-timers manar-update.timer
+sudo systemctl start manar-update.service
+sudo journalctl -u manar-update.service -n 100 --no-pager
+cat /opt/manar/shared/version
+curl --fail http://localhost:5000/api/version
+sudo -u manar -H /usr/local/bin/pm2 logs manar --lines 50 --nostream
+```
+
+The updater now reports its selected remote branch and target commit, smoke-tests the custom server when present, and verifies the live version after activation. Failed install/build/health checks retain or restore the previous release. Update the installed /usr/local/bin/manar-update explicitly with the command above: editing the checkout does not replace that installed copy automatically.
+
+Previously open display pages only refreshed configuration after deployment, leaving old application JavaScript running. New display pages check /api/version every 30 seconds and reload on a changed release, including after server reconnection. This is a deployment reload, not a normal casting transition. Admin pages do not auto-reload to avoid losing edits. Pages loaded before this change need one manual reload. A release reload interrupts an active casting connection.
+
+Validation on a Pi: confirm version equals the pushed commit, change and push a visible display detail, invoke the update service, and verify the browser updates within 30 seconds. Verify failed candidate builds preserve the previous version. Run the casting installer twice and confirm secrets remain unchanged, then test two TVs, sender stop/refresh/Wi-Fi loss, and browser certificate trust. Pi provisioning and hardware tests have not been run in the Windows development workspace.
+
+## Single-command HTTPS installation (recommended)
+
+On 64-bit Raspberry Pi OS Desktop, from your desktop user in the up-to-date checkout:
+
+```sh
+sudo bash scripts/raspberry-pi/install.sh
+```
+
+The script detects the LAN IPv4 address. To specify it explicitly:
+
+```sh
+sudo bash scripts/raspberry-pi/install.sh 192.168.1.50
+```
+
+Commit and push your application changes first: installation deploys the remote repository and branch configured in /etc/manar.conf, not uncommitted local files. Requires internet during installation and a desktop user invoking sudo. Existing media/configuration are preserved. The existing desktop autologin, PM2, nginx, Node, pnpm and daily updater are installed through setup.sh. Casting setup then creates persistent random tokens, HTTPS certificates, WebSocket proxying, and enrolls the Pi desktop browser. Reboot after completion. Re-running preserves tokens and the CA, and regenerates the server certificate for the supplied IP; reserve that IP on the router. Certificate renewal remains manual by rerunning setup-casting.sh before expiry.
+
+On a laptop, obtain /opt/manar/shared/casting-rootCA.crt from the Pi (also available at https://PI-IP/casting-rootCA.crt after HTTPS trust has been configured). Verify the certificate came from your Pi, import it as a trusted root, and restart the browser. On Windows use Install Certificate, Current User, Trusted Root Certification Authorities. Copying via SSH avoids needing an already trusted HTTPS connection to get the certificate. Never copy the CA private key. Then open https://PI-IP/connect, enter the digits that appear on the Pi display, and click Start Mirroring. No manual tokens are needed for the Pi's own display or laptop pairing.
+
+External Android TV receivers still require their own certificate trust and one-time enrollment using the display token in /opt/manar/shared/mirror.env. TV models without certificate installation need a publicly trusted certificate/domain setup instead. Nothing here bypasses screen-sharing permission prompts. The installer does not configure routers/firewalls, run on Lite/32-bit OS, or automatically trust remote devices.
+
+Private display startup settings are in the desktop user's ~/.config/manar/display.env (mode 600). Chromium opens trusted https://localhost/display automatically; existing HTTP port 5000 remains available for compatibility. Close any existing Chromium process using the Manar profile before reopening the browser after installation. Use the printed LAN HTTPS URL on the laptop, not localhost.
+
+Installer syntax was checked in development. Actual apt/systemd/nginx/Chromium provisioning requires validation on a Raspberry Pi; it has not been executed on the Windows development machine.
+
+## Navigation and display URL
+
+The root `/` is now the main menu. Use `/display` for the full-screen TV view, `/connect` to pair a laptop, `/config` for settings, and `/upload` for media. `/admin/mirror` contains the screen-sharing controls after pairing.
+
+The single-command installer launches the Pi at `https://localhost/display` and enrolls it automatically. Existing startup files containing the old localhost root URL are migrated by the updated browser launcher. Run the installer again after deploying this version to install the updated launcher, then close/reopen Chromium or reboot. Existing browsers on `/` need to navigate to `/display` once; the root is intentionally no longer the display. External TV enrollment uses `https://PI-IP/display?displayToken=TOKEN`. Tokens in localStorage remain valid because the origin has not changed. No data or prayer configuration migration is required.

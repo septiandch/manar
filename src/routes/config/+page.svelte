@@ -285,18 +285,18 @@
 
 <svelte:head><title>Display settings | Manar</title></svelte:head>
 
-<div class="m-auto my-2 w-4xl max-w-[95vw] space-y-4 md:my-4 md:max-w-[90vw]">
+<div class="mx-auto w-full max-w-5xl space-y-6 px-5 py-10 sm:px-8">
 	<header class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 		<div>
-			<h1 class="text-3xl font-semibold">App Config</h1>
+			<h1 class="text-3xl font-semibold">Settings</h1>
 		</div>
 		<div class="flex flex-wrap gap-2">
-			<Button href="/" class="min-h-8">Open display</Button>
+			<Button href="/display" class="min-h-8">Open display</Button>
 			<Button href="/upload" class="min-h-8">Manage media</Button>
 		</div>
 	</header>
 
-	<div class="space-y-4 rounded-md bg-foreground p-4 text-primary shadow-sm">
+	<div class="space-y-4 rounded-2xl border border-slate-200 bg-white p-6 text-slate-900 shadow-sm">
 		{#if error}
 			<div
 				role="alert"
