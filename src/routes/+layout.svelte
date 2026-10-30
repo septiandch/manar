@@ -47,30 +47,18 @@
 	{@render children()}
 {:else}
 	<div class="management min-h-screen bg-slate-50 text-slate-900">
-		<header class="border-b border-slate-200 bg-white">
-			<nav
-				aria-label="Main navigation"
-				class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-5 py-5 sm:px-8"
+		<header class="px-5 pt-8 text-center sm:px-8">
+			<a
+				href="/"
+				class="inline-flex items-center justify-center gap-2 text-xl font-semibold tracking-tight text-emerald-800 sm:text-4xl"
 			>
-				<a href="/" class="text-2xl font-bold tracking-tight text-emerald-800">Manar</a>
-				<div class="flex flex-wrap gap-1">
-					{#each [{ href: '/', label: 'Beranda' }, { href: '/display', label: 'Tampilan TV' }, { href: '/connect', label: 'Bagikan layar' }, { href: '/config', label: 'Pengaturan' }, { href: '/upload', label: 'Media' }] as link}
-						<a
-							href={link.href}
-							aria-current={page.url.pathname === link.href ||
-							(link.href === '/connect' && page.url.pathname === '/admin/mirror')
-								? 'page'
-								: undefined}
-							class="rounded-lg px-4 py-2.5 text-base font-medium text-slate-600 hover:bg-emerald-50 hover:text-emerald-800 aria-[current=page]:bg-emerald-50 aria-[current=page]:text-emerald-800"
-							>{link.label}</a
-						>
-					{/each}
-				</div>
-			</nav>
+				<span class="italic">Manar</span>
+				<span class="text-sm font-normal text-gray-600 sm:text-xl">| Media Syiar Al-Ikhlash</span>
+			</a>
 		</header>
 		{@render children()}
-		<footer class="mx-auto max-w-6xl px-5 py-8 text-sm text-slate-500 sm:px-8">
-			Manar | Media Syi'ar Al-Ikhlash
+		<footer class="mx-auto max-w-6xl px-5 py-8 text-center text-sm text-slate-500 sm:px-8">
+			{page.url.hostname}:{page.url.port || (page.url.protocol === 'https:' ? '443' : '80')}
 		</footer>
 	</div>
 {/if}
