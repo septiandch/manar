@@ -101,6 +101,7 @@
 </script>
 
 <svelte:head>
+	<meta name="google" content="notranslate" />
 	<link rel="stylesheet" href="/display-cursor.css" />
 </svelte:head>
 

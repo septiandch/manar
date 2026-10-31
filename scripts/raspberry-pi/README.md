@@ -358,13 +358,13 @@ Validation on a Pi: confirm version equals the pushed commit, change and push a 
 On 64-bit Raspberry Pi OS Desktop, from your desktop user in the up-to-date checkout:
 
 ```sh
-sudo bash scripts/raspberry-pi/install.sh
+sudo bash scripts/raspberry-pi/setup.sh
 ```
 
 The script detects the LAN IPv4 address. To specify it explicitly:
 
 ```sh
-sudo bash scripts/raspberry-pi/install.sh 192.168.1.50
+sudo bash scripts/raspberry-pi/setup.sh 192.168.1.50
 ```
 
 Commit and push your application changes first: installation deploys the remote repository and branch configured in /etc/manar.conf, not uncommitted local files. Requires internet during installation and a desktop user invoking sudo. Existing media/configuration are preserved. The existing desktop autologin, PM2, nginx, Node, pnpm and daily updater are installed through setup.sh. Casting setup then creates persistent random tokens, HTTPS certificates, WebSocket proxying, and enrolls the Pi desktop browser. Reboot after completion. Re-running preserves tokens and the CA, and regenerates the server certificate for the supplied IP; reserve that IP on the router. Certificate renewal remains manual by rerunning setup-casting.sh before expiry.
@@ -382,3 +382,33 @@ Installer syntax was checked in development. Actual apt/systemd/nginx/Chromium p
 The root `/` is now the main menu. Use `/display` for the full-screen TV view, `/connect` to pair a laptop, `/config` for settings, and `/upload` for media. `/admin/mirror` contains the screen-sharing controls after pairing.
 
 The single-command installer launches the Pi at `https://localhost/display` and enrolls it automatically. Existing startup files containing the old localhost root URL are migrated by the updated browser launcher. Run the installer again after deploying this version to install the updated launcher, then close/reopen Chromium or reboot. Existing browsers on `/` need to navigate to `/display` once; the root is intentionally no longer the display. External TV enrollment uses `https://PI-IP/display?displayToken=TOKEN`. Tokens in localStorage remain valid because the origin has not changed. No data or prayer configuration migration is required.
+
+### Pembaruan installer dengan satu perintah
+
+`sudo bash scripts/raspberry-pi/setup.sh [IP-PI]` kini menjalankan `git pull --ff-only` pada checkout sebagai akun desktop pemilik checkout, kemudian menjalankan ulang installer versi terbaru. Branch checkout harus memiliki upstream dan tidak boleh ada perubahan lokal/berkas baru yang belum disimpan ke Git. Installer tidak melakukan reset, menghapus perubahan, atau berpindah branch secara otomatis. Aplikasi produksi tetap diperbarui dari repositori/branch di `/etc/manar.conf`, yang bisa berbeda dari branch checkout installer.
+
+Untuk memperoleh versi installer ini pertama kali, lakukan `git pull --ff-only` satu kali setelah perubahan dipush. Sesudahnya cukup jalankan setup.sh. Installer mengonfigurasi ulang layanan dan dapat menghentikan casting yang sedang berlangsung; reboot tetap dilakukan manual setelah sukses. Pemeriksaan sintaks berhasil; eksekusi provisioning harus diuji pada Pi.
+
+## Perintah utama: setup.sh
+
+Mulai versi ini, gunakan hanya satu perintah untuk instalasi awal maupun pembaruan lengkap:
+
+```sh
+sudo bash scripts/raspberry-pi/setup.sh
+```
+
+Opsional, tetapkan IP LAN:
+
+```sh
+sudo bash scripts/raspberry-pi/setup.sh 192.168.1.8
+```
+
+Alurnya: periksa checkout Git, `git pull --ff-only`, jalankan ulang setup terbaru, pasang dependensi sistem, ambil dan build aplikasi produksi, aktifkan PM2 dan updater harian, siapkan HTTPS dan token casting, daftarkan browser Pi, serta nonaktifkan popup terjemahan. Token dan data lama dipertahankan. Setelah sukses, reboot manual. Perubahan lokal menyebabkan setup berhenti tanpa menghapus berkas.
+
+`setup-system.sh` dan `setup-casting.sh` adalah skrip internal yang dipanggil otomatis. `install.sh` hanya alias kompatibilitas menuju `setup.sh`; tidak perlu dijalankan terpisah. Untuk memperoleh versi setup ini pertama kali pada instalasi lama, lakukan `git pull --ff-only` sekali setelah perubahan dipush. Selanjutnya setup.sh sendiri mengambil pembaruan. Sertifikat lokal tetap perlu dipercaya sekali pada laptop atau TV eksternal.
+
+### Fullscreen saat startup
+
+Launcher terbaru menggunakan Chromium `--kiosk --start-fullscreen` dan profil Manar khusus. Ini tetap memakai desktop Raspberry Pi normal, tetapi jendela display tidak menampilkan toolbar/tab. Keluar dengan Alt+F4; F11 tidak dijadikan cara keluar yang dijamin pada mode kiosk. Server tetap berjalan saat browser ditutup.
+
+Setelah memperbarui launcher melalui setup.sh, reboot agar proses Chromium lama tidak mempertahankan mode jendelanya. Untuk menerapkan perubahan launcher saja pada instalasi yang sudah lengkap, jalankan `sudo install -m 755 scripts/raspberry-pi/browser.sh /usr/local/bin/manar-browser` dari checkout terbaru, lalu reboot. Pemeriksaan launcher: `grep -- --kiosk /usr/local/bin/manar-browser`. Jika masih tidak fullscreen, periksa `~/.config/autostart/manar.desktop` dan `~/.local/state/manar/browser.log`; mungkin ada launcher lain yang membuka jendela Chromium berbeda. Perilaku compositor dan startup perlu diuji langsung pada Pi.

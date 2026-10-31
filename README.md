@@ -125,7 +125,7 @@ speed. Missing or invalid datetime values fall back to the default `debugClock`;
 From an updated checkout on 64-bit Raspberry Pi OS Desktop:
 
 ```sh
-sudo bash scripts/raspberry-pi/install.sh
+sudo bash scripts/raspberry-pi/setup.sh
 ```
 
 This installs the app, automatic updates, HTTPS, casting credentials, and the Pi display browser. You can pass the Pi LAN IP as the last argument. Push your changes first: deployment builds the configured remote branch. Trust the generated CA on your laptop once, then open `https://PI-IP/connect`. See the [Pi installation guide](scripts/raspberry-pi/README.md#single-command-https-installation-recommended) for device trust, external TVs, and requirements.
