@@ -412,3 +412,9 @@ Alurnya: periksa checkout Git, `git pull --ff-only`, jalankan ulang setup terbar
 Launcher terbaru menggunakan Chromium `--kiosk --start-fullscreen` dan profil Manar khusus. Ini tetap memakai desktop Raspberry Pi normal, tetapi jendela display tidak menampilkan toolbar/tab. Keluar dengan Alt+F4; F11 tidak dijadikan cara keluar yang dijamin pada mode kiosk. Server tetap berjalan saat browser ditutup.
 
 Setelah memperbarui launcher melalui setup.sh, reboot agar proses Chromium lama tidak mempertahankan mode jendelanya. Untuk menerapkan perubahan launcher saja pada instalasi yang sudah lengkap, jalankan `sudo install -m 755 scripts/raspberry-pi/browser.sh /usr/local/bin/manar-browser` dari checkout terbaru, lalu reboot. Pemeriksaan launcher: `grep -- --kiosk /usr/local/bin/manar-browser`. Jika masih tidak fullscreen, periksa `~/.config/autostart/manar.desktop` dan `~/.local/state/manar/browser.log`; mungkin ada launcher lain yang membuka jendela Chromium berbeda. Perilaku compositor dan startup perlu diuji langsung pada Pi.
+
+### Login otomatis dan layar terkunci
+
+setup.sh kini memanggil setup-autologin.sh untuk mengaktifkan autologin LightDM pada akun desktop, mematikan screen blanking melalui raspi-config, dan menonaktifkan autostart pengunci layar standar untuk akun tersebut. Konfigurasi lokal yang diubah disalin ke .manar-backup. Terapkan dengan setup.sh lalu reboot; perbaikan khusus dapat dijalankan melalui sudo bash scripts/raspberry-pi/setup-autologin.sh. Akses fisik ke Pi berarti akses ke desktop tanpa password. Password akun dan SSH tidak dihapus.
+
+Jika setelah cabut-pasang HDMI tetap muncul greeter, jangan menganggapnya selalu penguncian: sesi Wayland/LightDM mungkin crash. Ambil sudo journalctl -b -u lightdm --no-pager -n 100 dan journalctl --user -b --no-pager -n 100. Skrip tidak dapat menjamin pemulihan dari crash compositor atau masalah HDMI; pengujian hotplug pada perangkat diperlukan.

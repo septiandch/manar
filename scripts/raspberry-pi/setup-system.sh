@@ -142,6 +142,7 @@ user-session=$desktop_session
 EOF
 systemctl set-default graphical.target
 systemctl enable lightdm
+bash "$source_dir/setup-autologin.sh"
 # Remove only the HDMI overrides inserted by the previous installer.
 cmdline=/boot/firmware/cmdline.txt
 [[ -f $cmdline ]] || cmdline=/boot/cmdline.txt
